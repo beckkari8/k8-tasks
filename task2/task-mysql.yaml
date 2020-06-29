@@ -8,11 +8,13 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mysql-rs-pod
+      app: wordpress
+      tier: mysql
   template:
     metadata:
       labels:
-        app: mysql-rs-pod
+        app: wordpress
+        tier: mysql
     spec:
       volumes:
       - name: db-volume
