@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{.Values.deploymentname}}
+  labels:
+    app: wordpress
+    tier: frontend
+spec:
+  replicas: {{.Values.replicas}}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: wordpress
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: wordpress
+        tier: frontend
+    spec:
+      containers:
+      - image: {{.Values.wordpressimagename}}
+        name: {{.Values.wordpresscontainername}}
+        env:
+        - name: WORDPRESS_DB_HOST
+          value: {{.Values.servicename}}
+        - name: WORDPRESS_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{.Values.mysqlsecretname}}
+              key: {{.Values.mysqlsecretkey}}
+        ports:
+        - containerPort: 80
+          name: wordpress

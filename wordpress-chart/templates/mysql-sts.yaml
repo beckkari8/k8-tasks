@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{.Values.servicename}}
+  labels:
+    app: mysql
+spec:
+  ports:
+  - port: 3306
+    name: web
+  clusterIP: None
+  selector:
+    app: mysql
+    tier: backend
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-sts
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+      tier: backend # has to match .spec.template.metadata.labels
+  serviceName: "{{.Values.servicename}}"
+  replicas: 1 # by default is 1
+  template:
+    metadata:
+      labels:
+        app: mysql
+        tier: backend # has to match .spec.selector.matchLabels
+    spec:
+      securityContext:
+        runAsUser: 65534
+        fsGroup: 65534
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: {{.Values.mysqlcontainername}}
+        image: {{.Values.mysqlimage}}:{{.Values.mysqlversion}}
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom: 
+            secretKeyRef:
+              name: {{.Values.mysqlsecretname}}
+              key: {{.Values.mysqlsecretkey}}
+        ports:
+        - containerPort: 3306
+          name: {{.Values.mysqlpodname}}
+        volumeMounts:
+        - name: {{.Values.claimtemplatename}}
+          mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+  - metadata:
+      name: {{.Values.claimtemplatename}}
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: {{.Values.claimstoragesize}}
